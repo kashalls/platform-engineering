@@ -27,7 +27,9 @@ on every object; the findings are in everything else.
 `flux diff kustomization <name> -n <ns> --path <dir>` builds a local
 directory and diffs it against what the cluster runs (see the `flux`
 skill's Kustomization reference). For Argo CD, `argocd app diff <app>
---local <dir>` does the same. Both need cluster access and show what this
+--local <dir>` does the same; local diffing has changed across Argo CD
+releases, so check `argocd app diff --help` on the CLI you have. Both need
+cluster access and show what this
 merge would change on that cluster, which is a stronger check than an
 offline render.
 
