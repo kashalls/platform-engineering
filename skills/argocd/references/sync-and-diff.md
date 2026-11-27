@@ -42,6 +42,7 @@ metadata:
 | `PostSync` | after everything is healthy — smoke tests, notifications |
 | `SyncFail` | only when the sync fails — cleanup, alerting |
 | `Skip` | never applied; a way to keep a manifest in Git unmanaged |
+| `PostDelete` | after the Application and its resources are deleted |
 
 Delete policies: `HookSucceeded`, `HookFailed`, `BeforeHookCreation` (the
 default). Without a delete policy, hook Jobs **accumulate** — one per sync,
@@ -84,8 +85,10 @@ spec:
 `managedFieldsManagers` is the cleanest option when a known controller owns the
 field: it ignores whatever that manager set, without you enumerating paths.
 
-To ignore a field for drift detection but still apply it on an explicit sync, add
-`RespectIgnoreDifferences=true` to `syncOptions`.
+`ignoreDifferences` only affects the diff: a sync still applies the full
+manifest, overwriting the field the controller set. Add
+`RespectIgnoreDifferences=true` to `syncOptions` to make sync leave ignored
+fields as they are in the cluster.
 
 ## Sync options
 
@@ -125,18 +128,19 @@ PVCs and other stateful objects.
 
 ## Resource tracking
 
-Argo tracks ownership with the `app.kubernetes.io/instance` label by default,
-which **collides with other tools** that use the same standard label, and is
-truncated at 63 characters. The alternative is annotation-based tracking, set
-cluster-wide in `argocd-cm`:
+Argo CD v3 tracks ownership with the `argocd.argoproj.io/tracking-id`
+annotation by default. Installs upgraded from v2, or configured explicitly, may
+still use the `app.kubernetes.io/instance` label, which **collides with other
+tools** that use the same standard label and is truncated at 63 characters.
+Check which one is set in `argocd-cm`:
 
 ```yaml
 data:
-  application.resourceTrackingMethod: annotation
+  application.resourceTrackingMethod: annotation   # label | annotation | annotation+label
 ```
 
-Switching this causes a one-time re-adoption of every resource. Do it during a
-quiet window, not mid-incident.
+Switching methods causes a one-time re-adoption of every resource. Do it during
+a quiet window, not mid-incident.
 
 ## Pruning
 
@@ -147,5 +151,3 @@ argocd app sync <app> --prune --dry-run    # see what would be deleted first
 
 Resources Argo will not prune without help: anything annotated `Prune=false`,
 anything it does not track, and cluster-scoped resources the AppProject forbids.
-Argo CD v3 also adds `argocd app confirm-deletion` for applications that require
-explicit confirmation before their resources are removed.

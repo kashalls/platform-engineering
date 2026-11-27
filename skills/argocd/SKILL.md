@@ -99,7 +99,9 @@ spec:
 ```
 
 All three default to **false/off**, including inside `automated`. An `automated`
-block without `prune` and `selfHeal` only applies additions.
+block without `prune` and `selfHeal` still syncs every change Git makes, new or
+modified; it just never deletes resources removed from Git, and never reverts
+changes made directly in the cluster.
 
 `selfHeal: true` reverts `kubectl edit` — including emergency fixes during an
 incident. Know whether it is on before you hand-patch anything.

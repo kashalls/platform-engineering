@@ -107,7 +107,10 @@ Behavior worth knowing before adopting it:
 - Deleting the parent **cascades to every child** and everything they manage.
 - Child sync status does not roll up into the parent's health by default; the
   parent can be `Synced`/`Healthy` while children are broken.
-- Ordering between children needs sync waves on the child Applications.
+- Ordering between children needs sync waves on the child Applications, **and**
+  a health check for the `Application` kind. Since v1.8 Argo CD does not assess
+  Application health by default, so without the custom health check in
+  `argocd-cm` the parent moves to the next wave without waiting for the child.
 
 ## ApplicationSets
 
@@ -118,6 +121,8 @@ Generate Applications from a template. The controller is a separate Deployment
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
         repoURL: https://github.com/org/repo
@@ -148,9 +153,11 @@ empty or unreachable generator source is the dangerous case. `create-only` or
 `preserveResourcesOnDeletion: true` blunt this; test generator changes with
 `--dry-run` first.
 
-Template variable syntax differs by Argo CD version (`{{path.basename}}` in older
-releases, Go-template `{{.path.basename}}` with `goTemplate: true`). Check which
-your install uses rather than copying examples blindly.
+Template variable syntax depends on `goTemplate`: without it, the legacy
+syntax is `{{path.basename}}`; with `goTemplate: true`, it is Go-template
+`{{.path.basename}}`. Examples online mix the two; check `goTemplate` before
+copying one. `missingkey=error` makes a reference to a field the generator did
+not return fail instead of rendering as `<no value>`.
 
 ## Diagnosing a generated Application
 
