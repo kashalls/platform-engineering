@@ -1,0 +1,15 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "platform-engineering",
+  "owner": {
+    "name": "kashalls",
+    "url": "https://github.com/kashalls"
+  },
+  "plugins": [
+    {
+      "name": "platform-engineering",
+      "source": "./",
+      "description": "Troubleshooting and authoring skills for platform engineering: Kubernetes, OpenShift, Flux, Argo CD, Kyverno, Linux & networking, observability, incident triage/RCA, PR review, Renovate, Conventional Commits, and platform mindset."
+    }
+  ]
+}
