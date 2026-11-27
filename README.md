@@ -4,9 +4,9 @@ A handbook for platform engineering, packaged as [Claude Code](https://claude.co
 skills. Each skill is a troubleshooting-first reference for one platform
 component: symptom → route → verified commands → the traps nobody warns you about.
 
-Every command in these skills was run before it was written down. Where a claim
-comes from a specification, a CRD schema, or upstream source, it is quoted rather
-than paraphrased.
+Commands in these skills were run before they were written down; the few that
+were not say so where they appear. Where a claim comes from a specification, a
+CRD schema, or upstream source, it is quoted rather than paraphrased.
 
 ## Skills
 
@@ -37,9 +37,9 @@ As a Claude Code plugin:
 /plugin install platform-engineering
 ```
 
-Or clone anywhere and point Claude Code at it — skills under `.claude/skills/`
-in a project are discovered automatically, so you can also copy individual skill
-directories into a repo that needs them.
+Or copy individual skill directories from `skills/` into a project's
+`.claude/skills/` (or `~/.claude/skills/` for every project). Skills there are
+discovered automatically; cloning this repository alone does not install them.
 
 ## Using them
 
@@ -59,7 +59,7 @@ any particular environment. Version-sensitive claims name the version they were
 verified against, because Kubernetes and its ecosystem move faster than any
 handbook.
 
-Verified against: Kubernetes v1.36, Flux v2.9.4, Argo CD v3.5.1, `oc` v4.22.9,
+Verified against: Kubernetes v1.36, Flux v2.10.0, Argo CD v3.5.1, `oc` v4.22.9,
 Kyverno v1.19.0, Renovate schema v44.39.1.
 
 ## Contributing
