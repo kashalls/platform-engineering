@@ -56,7 +56,8 @@ pods "web-xxxx" is forbidden: unable to validate against any security context co
 ```
 
 By default OpenShift assigns the `restricted-v2` SCC, which **drops all
-capabilities, forbids running as root, and forces a random UID** from the
+capabilities (only `NET_BIND_SERVICE` may be added back), forbids running as
+root, and forces a random UID** from the
 namespace's allocated range. Images with a hardcoded `USER 0`, or that write to
 a fixed path owned by a specific UID, fail.
 
@@ -119,15 +120,19 @@ support asks for, and it is also a good local artifact for a postmortem.
 - **Never edit a resource owned by a ClusterOperator.** The CVO reverts it,
   usually within minutes, and your change vanishes with no event explaining why.
   Use the operator's own config CR instead.
-- **`oc apply` on a Route can silently drop `host`.** OpenShift assigns a host if
-  unset, and re-applying a manifest without it triggers reassignment.
+- **A Route without `host` gets a generated one.** The name is derived from the
+  Route and namespace, so recreating the Route elsewhere, or renaming it,
+  changes the host and breaks DNS pointed at the old one. Set `host` explicitly
+  for anything external.
 - **ImageStream tags can be resolved at deploy time**, so a Deployment can change
   image without any manifest change. Surprising when you are chasing "where did
   this version come from".
 - **The internal registry may not be exposed by default.** Pushing to it from
   outside requires `oc registry login` and an exposed route.
-- **`system:admin` bypasses SCCs.** Testing as cluster-admin proves nothing about
-  whether a workload will run as a normal service account.
+- **Bare pods created as cluster-admin can use any SCC.** A pod you create
+  directly is admitted against *your* permissions, so it may run where the
+  workload will not. Pods created by a Deployment or other controller are
+  admitted against the pod's ServiceAccount; test with `scc-subject-review -z`.
 
 ## References
 

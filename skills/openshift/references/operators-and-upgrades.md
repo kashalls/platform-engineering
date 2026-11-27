@@ -47,7 +47,7 @@ unmanaged override — which is unsupported and should be temporary.
 ```bash
 oc get clusterversion
 oc adm upgrade                      # what is available
-oc adm upgrade --to=4.16.20
+oc adm upgrade --to=<version>       # a version listed by the command above
 oc get clusterversion -o jsonpath='{.status.conditions}' | jq
 ```
 

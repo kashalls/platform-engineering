@@ -54,7 +54,7 @@ The default for authenticated users since OCP 4.11 (`restricted` was the earlier
 default and still exists). It:
 
 - forbids running as root, and **assigns a random UID** from the namespace range
-- drops all capabilities except `NET_BIND_SERVICE`
+- drops all capabilities, and allows only `NET_BIND_SERVICE` to be added back
 - requires `allowPrivilegeEscalation: false`
 - requires a seccomp profile of `runtime/default`
 - forbids host namespaces, host paths, and privileged mode
@@ -84,8 +84,8 @@ group 0, group-writable paths work for any assigned UID.
 
 Other required fixes:
 
-- **Do not bind ports below 1024** unless you keep `NET_BIND_SERVICE`. Listen on
-  8080, not 80.
+- **Do not bind ports below 1024** unless the container adds `NET_BIND_SERVICE`
+  in `capabilities.add`. Listen on 8080, not 80.
 - **Do not write outside declared volumes.** Add an `emptyDir` for scratch space.
 - **Do not hardcode `runAsUser`** in the manifest — let OpenShift assign one.
   A hardcoded UID outside the namespace range is rejected outright.

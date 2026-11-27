@@ -32,8 +32,11 @@ oc get route <name> -o jsonpath='{.status.ingress[*].conditions}' | jq
 | Reason | Cause |
 |---|---|
 | `HostAlreadyClaimed` | Another Route in another namespace already owns that host. First claim wins, permanently. |
-| `RouteNotAdmitted` | The router's namespace/route selector excludes this Route. |
 | `ExtendedValidationFailed` | Certificate does not match the host, or key/cert mismatch. |
+
+A Route excluded by a router shard's namespace or route selector usually has no
+`status.ingress` entry for that router at all, rather than an error. Compare the
+entries present against `oc get ingresscontroller -n openshift-ingress-operator`.
 
 `HostAlreadyClaimed` across namespaces is a genuine multi-tenancy trap: a
 misspelled host in one team's namespace can permanently block another team's real
@@ -79,9 +82,9 @@ oc get ingresses.config/cluster -o jsonpath='{.spec.domain}'
 Note `ingresses.config/cluster` (the cluster config) is a different resource from
 a namespaced `ingress`. Getting these confused is common.
 
-**Re-applying a manifest without `host` can trigger reassignment**, breaking DNS
-that pointed at the old name. Either always set `host` explicitly, or never
-include the field and let it stay assigned.
+**A generated host depends on the Route's name and namespace**, so recreating the
+Route under a different name or namespace changes it and breaks DNS that pointed
+at the old one. Set `host` explicitly for anything with an external DNS record.
 
 ## The router itself
 
@@ -131,8 +134,10 @@ endpoints, the Route is irrelevant.
 
 ## NetworkPolicy and multitenant isolation
 
-OpenShift SDN's multitenant mode and OVN-Kubernetes network policies both apply.
-Additionally, OpenShift ships default policies in some namespaces.
+OVN-Kubernetes is the only network plugin on current releases; OpenShift SDN
+(and its multitenant mode) was removed in 4.17. Standard NetworkPolicy applies,
+plus `AdminNetworkPolicy` for cluster-wide rules, and OpenShift ships default
+policies in some namespaces.
 
 ```bash
 oc get networkpolicies -A
