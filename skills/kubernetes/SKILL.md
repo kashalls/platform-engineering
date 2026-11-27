@@ -79,7 +79,7 @@ Verified against a v1.36 server. Each returns one line per object, greppable.
 
 ```bash
 # Everything that has restarted, worst first.
-kubectl get pods -A --sort-by=.status.containerStatuses[0].restartCount \
+kubectl get pods -A --sort-by='.status.containerStatuses[0].restartCount' \
   -o custom-columns='NS:.metadata.namespace,POD:.metadata.name,RESTARTS:.status.containerStatuses[*].restartCount'
 
 # Why each container last terminated (OOMKilled vs Error vs Completed).

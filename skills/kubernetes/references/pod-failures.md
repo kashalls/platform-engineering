@@ -27,7 +27,7 @@ The `terminated` object is the diagnosis:
 | `Error` | 137 | SIGKILL from outside — usually a failed liveness probe, not OOM. |
 | `Error` | 143 | SIGTERM — graceful shutdown that the app treated as failure. |
 | `Completed` | 0 | Exited successfully. For a Deployment this is still a crashloop: the process is not meant to return. |
-| `ContainerCannotRun` | 128 | Bad `command`/`entrypoint`, or the binary is not executable in the image. |
+| `StartError` | 128 | Bad `command`/`entrypoint`, or the binary is not executable in the image. (`ContainerCannotRun` on Docker-era runtimes.) |
 
 Exit code 137 is ambiguous by design. Distinguish with:
 
@@ -49,11 +49,15 @@ Points to check before raising the limit:
 
 - **The limit applies per container, not per pod.** A sidecar can OOM while the
   app is fine. `--containers` on `kubectl top` splits it out.
-- **JVM/Node/Go runtimes do not read cgroup limits by default in older versions.**
-  A JVM without `-XX:MaxRAMPercentage` sizes its heap from *host* memory and will
-  always overshoot a small limit.
-- **Page cache counts toward the cgroup limit.** A process doing heavy file I/O
-  can be OOMKilled with a small RSS.
+- **Runtimes size themselves differently against the limit.** Current JVMs read
+  the cgroup limit but default the heap to 25% of it (`-XX:MaxRAMPercentage`),
+  so off-heap and native memory are what usually overshoot. Go ignores the
+  memory limit entirely unless `GOMEMLIMIT` is set. Node's default heap ceiling
+  does not track the limit either; set `--max-old-space-size`.
+- **tmpfs and dirty pages count toward the cgroup limit.** An `emptyDir` with
+  `medium: Memory` is charged to the container, and dirty page cache that cannot
+  be written back fast enough is not reclaimable. Clean page cache is reclaimed
+  before an OOM kill.
 - **Raising the limit without raising the request** makes the pod Burstable and a
   first eviction candidate under node pressure.
 
@@ -117,8 +121,9 @@ succeeds is indistinguishable from a hung pod without reading its logs.
 
 Sidecars declared as `initContainers` with `restartPolicy: Always` (native
 sidecars — on by default since v1.29, stable since v1.33) start before app
-containers and keep running. If one of those crashes, the app container never
-starts.
+containers and keep running. A sidecar that never starts (or never passes its
+`startupProbe`) blocks the app containers from starting; one that crashes later
+is simply restarted.
 
 ## Stuck Terminating
 

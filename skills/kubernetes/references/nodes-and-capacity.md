@@ -36,18 +36,23 @@ rather than assuming:
 kubectl get --raw "/api/v1/nodes/<node>/proxy/configz" | jq '.kubeletconfig.evictionHard'
 ```
 
-Eviction order is **QoS class first**, then how far the pod exceeds its requests:
+The kubelet ranks eviction candidates by:
 
-1. `BestEffort` — no requests or limits. Evicted first.
-2. `Burstable` — requests < limits.
-3. `Guaranteed` — requests == limits for every container and every resource.
+1. Whether the pod's usage of the starved resource **exceeds its requests**.
+2. **Pod priority** (`priorityClassName`).
+3. How far usage exceeds requests.
+
+QoS class is not an input to that ranking, but it predicts the outcome: a
+`BestEffort` pod (no requests) always exceeds its requests, and a `Guaranteed`
+pod (requests == limits for every container and resource) cannot exceed them,
+so it is evicted only when system daemons need the memory.
 
 ```bash
 kubectl get pods -A -o custom-columns='NS:.metadata.namespace,POD:.metadata.name,QOS:.status.qosClass'
 ```
 
-Setting requests equal to limits is the only way to reach `Guaranteed`, and it is
-the practical mechanism for protecting critical workloads from eviction.
+To protect a critical workload from eviction, set requests that cover its real
+usage (requests == limits gives `Guaranteed`) and give it a higher priority.
 
 **Evicted pods are not deleted.** They accumulate as `Failed` objects and clutter
 triage output:

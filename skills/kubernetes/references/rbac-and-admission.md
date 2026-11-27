@@ -54,10 +54,11 @@ kubectl get rolebindings,clusterrolebindings -A -o json | jq -r '
   `pods/portforward` must be granted by name. `get pods` does not imply logs.
 - **`roleRef` is immutable.** Changing which Role a binding points to requires
   delete and recreate.
-- **The API group is part of the match.** `deployments` in `apps` is not
-  `deployments` in `extensions`. Get it from `kubectl api-resources`.
-- **Wildcards cover only what exists at evaluation time**, which quietly includes
-  CRDs installed later. `*` on `*` is a cluster-admin equivalent.
+- **The API group is part of the match.** A rule for `deployments` in `""` (core)
+  grants nothing; Deployments live in `apps`. Get the group from
+  `kubectl api-resources`.
+- **Wildcards are evaluated at request time**, so they quietly cover CRDs
+  installed after the Role was written. `*` on `*` is a cluster-admin equivalent.
 - **`escalate` and `bind` guard privilege escalation.** Without them you cannot
   create a Role granting more than you already hold. This is a feature.
 - **Every pod gets a ServiceAccount token by default.** Set

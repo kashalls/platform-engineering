@@ -72,8 +72,13 @@ a rollout on its own.
 terminationGracePeriodSeconds: 60
 lifecycle:
   preStop:
-    exec: {command: ["sleep", "5"]}
+    sleep: {seconds: 5}
 ```
+
+The `sleep` action runs in the kubelet, so it works on distroless images that
+have no `sleep` binary. On a cluster that predates it, fall back to
+`exec: {command: ["sleep", "5"]}`; check with
+`kubectl explain pod.spec.containers.lifecycle.preStop.sleep`.
 
 Endpoint removal and SIGTERM happen **concurrently**, not in order. A pod can
 receive new connections for a moment after SIGTERM, which shows up as 502s during
@@ -124,4 +129,6 @@ Secrets update in place (with kubelet sync delay), while env vars are fixed for
 the pod's lifetime. Neither restarts pods on change — use `rollout restart`, or a
 hash annotation on the pod template so the change itself triggers a rollout.
 
-`envFrom` on a ConfigMap silently skips keys that are not valid env var names.
+`envFrom` on a ConfigMap skips keys that are not valid env var names, recording
+only an event. What counts as valid has been relaxed in recent releases, so
+check the pod's events rather than assuming a key was skipped or kept.
