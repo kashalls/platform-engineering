@@ -1,5 +1,4 @@
 {
-  "$schema": "https://code.claude.com/schemas/marketplace.json",
   "name": "platform-engineering",
   "owner": {
     "name": "kashalls",
