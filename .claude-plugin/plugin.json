@@ -1,0 +1,15 @@
+{
+  "name": "platform-engineering",
+  "description": "Troubleshooting and authoring skills for platform engineering: Kubernetes, OpenShift, Flux, Argo CD, Kyverno, Linux & networking, observability, incident triage/RCA, PR review, Renovate, Conventional Commits, and platform mindset.",
+  "version": "0.1.0",
+  "author": {
+    "name": "kashalls",
+    "url": "https://github.com/kashalls"
+  },
+  "homepage": "https://github.com/kashalls/platform-engineering",
+  "license": "Apache-2.0",
+  "keywords": [
+    "kubernetes", "openshift", "gitops", "flux", "argocd", "kyverno",
+    "observability", "sre", "incident-response", "platform-engineering"
+  ]
+}
