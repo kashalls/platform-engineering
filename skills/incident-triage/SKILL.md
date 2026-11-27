@@ -59,7 +59,9 @@ argocd app rollback <app> <history-id>
 ```
 
 Suspending the GitOps controller first is important: otherwise it reverts your
-manual mitigation within a minute and you lose time wondering why.
+manual mitigation on its next reconcile (immediately, with Argo CD self-heal)
+and you lose time wondering why. `argocd app rollback` refuses to run while
+auto-sync is enabled; disable it on the Application first.
 
 ## Roles
 
