@@ -50,11 +50,13 @@ validate:
 ```
 
 Pattern operators: `*` (zero or more chars), `?` (one char), `?*` (non-empty),
-`|` (OR), `>`/`<`/`>=`/`<=`/`!=` for numbers and quantities, and `+`/`-` prefixes
-on list elements for "must exist" / "must not exist".
+`|` (OR), `&` (AND), `!` (not equal), `>`/`<`/`>=`/`<=` for numbers and
+quantities, and `-` / `!-` for an inclusive range or its negation (`1-10`).
 
 A list in a pattern means **every element must match**. To require only one
-element to match, use `anyPattern`.
+element to match, put the existence anchor `^()` on the list key (below).
+`anyPattern` is different: it passes when any one of several whole patterns
+matches.
 
 **Deny with conditions** — for logic patterns cannot express:
 
@@ -100,13 +102,14 @@ mutate:
 
 Anchors are the part worth learning:
 
-| Anchor | Meaning |
-|---|---|
-| `(key)` | **Conditional** — apply the rest only where this matches |
-| `+(key)` | **Add** — set only if absent, never overwrite |
-| `<(key)` | **Global** — condition evaluated against the whole resource |
-| `^(key)` | **Add-if-not-present** for list elements |
-| `X(key)` | **Negation** — apply only if the key is absent |
+| Anchor | Used in | Meaning |
+|---|---|---|
+| `(key)` | validate, mutate | **Conditional**: apply the rest only where this matches |
+| `<(key)` | validate, mutate | **Global**: if this does not match, the whole rule is skipped |
+| `+(key)` | mutate | **Add if not present**: set only if absent, never overwrite |
+| `=(key)` | validate | **Equality**: if the key is present, its value must match |
+| `^(key)` | validate | **Existence**: at least one element of the list must match |
+| `X(key)` | validate | **Negation**: the key must not be present |
 
 `+(key)` is what you want for defaults, so a user's explicit value survives.
 
@@ -183,7 +186,8 @@ kyverno jp query -i resource.yaml 'spec.containers[].image'
 
 ## Preconditions
 
-Cheaper than `match` for value-based gating, and evaluated first:
+Evaluated after `match`/`exclude` select the resource, and before the rule
+body runs. Use them for value-based gating that `match` cannot express:
 
 ```yaml
 preconditions:

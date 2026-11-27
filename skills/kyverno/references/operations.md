@@ -62,8 +62,9 @@ Two things that catch people:
 - **List the autogen rule names too.** Excepting `check-team-label` alone leaves
   `autogen-check-team-label` enforcing against Deployments — the exception looks
   broken when it is merely incomplete.
-- **Exceptions must be enabled** in the Kyverno config, and are commonly
-  restricted to a specific namespace so tenants cannot self-exempt.
+- **Check that exceptions are enabled and where they may live.** The admission
+  controller's `--enablePolicyException` and `--exceptionNamespace` flags decide
+  this; restricting exceptions to one namespace stops tenants self-exempting.
 
 Prefer a narrow exception with an expiry ticket over widening the policy. An
 exception is visible and auditable; a weakened policy is neither.

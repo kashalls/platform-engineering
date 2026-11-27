@@ -185,8 +185,9 @@ kubectl get clusterpolicy -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.
   the failure appears as a `UpdateRequest` error, not an admission error.
 - **Mutations apply in admission order**, and a later mutating webhook from
   another controller can overwrite Kyverno's change.
-- **Exceptions are objects, not annotations.** `PolicyException` must be enabled
-  in the Kyverno config and is often restricted to specific namespaces.
+- **Exceptions are objects, not annotations.** Whether `PolicyException` is
+  honored, and in which namespaces, is set by the admission controller's
+  `--enablePolicyException` and `--exceptionNamespace` flags.
 
 ## References
 
