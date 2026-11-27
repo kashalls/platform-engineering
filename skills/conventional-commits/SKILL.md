@@ -76,6 +76,8 @@ Rules straight from the spec:
 - **`BREAKING CHANGE` MUST be uppercase.** Everything else in a Conventional
   Commit is case-insensitive to implementors; this is the sole exception.
   `Breaking change:` is not recognized and your major bump will not happen.
+- *"BREAKING-CHANGE MUST be synonymous with BREAKING CHANGE, when used as a token
+  in a footer."* The hyphenated form is equally valid.
 - *"If `!` is used, `BREAKING CHANGE:` MAY be omitted from the footer section, and
   the commit description SHALL be used to describe the breaking change."*
 - A breaking change is MAJOR **regardless of type** — `fix!:` and `refactor!:`
@@ -135,6 +137,9 @@ echo "export default {extends: ['@commitlint/config-conventional']}" > commitlin
 
 ```yaml
 # .github/workflows/commitlint.yaml — validate PR commits in CI too
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0        # --from needs the base commit in history
 - run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to HEAD --verbose
 ```
 
