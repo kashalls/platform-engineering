@@ -125,8 +125,9 @@ Bad:
 - Cluster count, resource count (activity, not value)
 - Mandated adoption percentage (measures the mandate, not the platform)
 
-The DORA four — deployment frequency, lead time, change failure rate, time to
-restore — are the standard outcome set, and they measure the whole delivery
+DORA's delivery metrics (deployment frequency, lead time for changes, change
+failure rate, and failed deployment recovery time, formerly "time to restore")
+are the standard outcome set, and they measure the whole delivery
 system rather than your team's output. That is the point.
 
 Ask users directly and regularly: *what is the most annoying part of shipping
