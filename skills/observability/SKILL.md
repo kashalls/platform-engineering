@@ -97,9 +97,11 @@ The non-negotiable rules:
   the alert is not actionable and should not page.
 - **Ratios, not absolute counts.** "100 errors/sec" means different things at
   1k rps and 10 rps.
-- **Beware `absent()` and division by zero.** A service with no traffic gives
-  `0/0 = NaN`, which is not `> 0.05`, so the alert silently stops evaluating.
-  Guard with `and on() rate(...) > 0` or use `absent_over_time()` separately.
+- **Beware division by zero.** A service with no traffic gives `0/0 = NaN`,
+  which is never `> 0.05`, so the alert evaluates but can never fire. That is
+  correct for "error ratio", but it means silence is not health: pair it with a
+  separate alert for missing traffic or a dead exporter (`absent_over_time()`,
+  `up == 0`).
 
 Three tiers, and only one of them wakes a human:
 
@@ -147,8 +149,10 @@ cardinality explosion.
 - **`histogram_quantile` interpolates within a bucket**, so precision is bounded
   by bucket boundaries. A p99 of 10s when the top bucket is 10s means "at least
   10s" — pick buckets that match your SLO.
-- **Staleness**: a series that stops being reported disappears after ~5 minutes,
-  and expressions referencing it evaluate to nothing rather than zero. This makes
+- **Staleness**: a series that stops being reported disappears as soon as
+  Prometheus marks it stale (immediately when its target or the series vanishes;
+  after the 5 minute lookback only when no staleness marker is written), and
+  expressions referencing it evaluate to nothing rather than zero. This makes
   "alert when X == 0" fail exactly when the exporter dies.
 - **Scrape interval vs range** mismatches produce jagged, misleading graphs.
 - **Recording rules do not backfill.** A new rule has no history; do not expect a

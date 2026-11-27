@@ -66,7 +66,7 @@ query time with `| json`.
 
 | Level | Use | Should it alert? |
 |---|---|---|
-| `error` | A request failed and a human may need to act | Rate-based alert, yes |
+| `error` | A request failed and a human may need to act | Prefer the metric (error ratio); alert on the log rate only where no metric exists |
 | `warn` | Recovered, degraded, or deprecated | No |
 | `info` | Significant state changes — startup, config, shutdown | No |
 | `debug` | Off in production | No |
@@ -129,11 +129,11 @@ between metrics and logs, `trace_id` in log lines, and exemplars (or a link)
 from metrics to traces. If a handoff is missing, the chain breaks and people fall
 back to grepping, which is where the time goes.
 
-```promql
-# Exemplars attach trace IDs to histogram samples; Grafana renders them
-# as clickable points on the graph.
-histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))
-```
+Exemplars are not part of the query. The application attaches a trace ID to
+histogram observations, Prometheus stores them when exemplar storage is enabled
+(`--enable-feature=exemplar-storage`), and Grafana shows them as clickable
+points when the panel's Exemplars toggle is on, for an ordinary query such as
+`histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))`.
 
 ## Retention and cost
 

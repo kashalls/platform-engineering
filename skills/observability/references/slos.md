@@ -66,13 +66,26 @@ Use the bucket-ratio form rather than `histogram_quantile`. It is exact, it is
 cheap, and it maps directly onto "fraction of requests meeting the target" — which
 is the actual definition. It does require a bucket boundary at your threshold.
 
-Record the SLI as a recording rule so dashboards and alerts share one definition:
+Record the SLI as recording rules so dashboards and alerts share one
+definition. The burn-rate alerts below need it at four windows:
 
 ```yaml
 - record: slo:http_requests:good_ratio_rate5m
   expr: |
     sum(rate(http_requests_total{code!~"5.."}[5m]))
       / sum(rate(http_requests_total[5m]))
+- record: slo:http_requests:good_ratio_rate30m
+  expr: |
+    sum(rate(http_requests_total{code!~"5.."}[30m]))
+      / sum(rate(http_requests_total[30m]))
+- record: slo:http_requests:good_ratio_rate1h
+  expr: |
+    sum(rate(http_requests_total{code!~"5.."}[1h]))
+      / sum(rate(http_requests_total[1h]))
+- record: slo:http_requests:good_ratio_rate6h
+  expr: |
+    sum(rate(http_requests_total{code!~"5.."}[6h]))
+      / sum(rate(http_requests_total[6h]))
 ```
 
 ## Burn-rate alerting
