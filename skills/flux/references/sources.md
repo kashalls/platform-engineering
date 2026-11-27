@@ -26,14 +26,15 @@ here, not downstream.
 | `authentication required` / `couldn't find remote ref` | Bad or missing credentials, or the ref does not exist. |
 | `unknown revision` | The branch/tag in `spec.ref` is gone or misspelled. |
 | `host key verification failed` | `known_hosts` missing from the SSH secret. |
-| `x509: certificate signed by unknown authority` | Self-hosted Git with a private CA; needs `caFile` in the secret. |
+| `x509: certificate signed by unknown authority` | Self-hosted Git with a private CA; needs `ca.crt` in the secret (`--ca-crt-file` on `flux create secret git`). |
 | `no such host` | Cluster DNS or egress, not Git. |
 | `artifact revision ... does not match` | Verification (cosign/GPG) failed. |
 | `context deadline exceeded` | `spec.timeout` too low, or a very large repo. |
 
 ## Git authentication
 
-SSH secrets need exactly three keys, and `known_hosts` is the one people forget:
+SSH secrets need `identity` and `known_hosts` (per the CRD), and `known_hosts`
+is the one people forget:
 
 ```bash
 flux create secret git <name> \

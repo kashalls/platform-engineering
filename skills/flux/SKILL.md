@@ -39,7 +39,8 @@ flux check 2>&1 | grep toolkit
 
 On a current v2 install these are `kustomize.toolkit.fluxcd.io/v1`,
 `source.toolkit.fluxcd.io/v1`, `helm.toolkit.fluxcd.io/v2`, and
-`notification.toolkit.fluxcd.io/v1` (with `v1beta3` for Alert and Provider).
+`notification.toolkit.fluxcd.io/v1` (Alert and Provider were `v1beta3` on older
+releases; v2.10 serves them as `v1`).
 
 ## Triage order
 
@@ -119,8 +120,9 @@ faithfully re-apply the old revision.
 - **Interval is a floor, not a schedule.** A long interval delays drift
   correction; `retryInterval` governs the failure path and defaults to `interval`.
 - **Flux only corrects drift for fields it manages.** Fields added by another
-  controller are left alone unless you set `force: true` — which recreates
-  immutable resources rather than patching them, so it can be destructive.
+  controller or a `kubectl edit` on a field Git does not set are left alone.
+- **`force: true` is for immutable-field conflicts, not drift.** It deletes and
+  recreates the object instead of patching it, so it can be destructive.
 - **Deleting a Kustomization deletes everything it owns** when `prune: true`.
   Suspend before deleting if you want the workloads to survive.
 - **A HelmRelease failure often has nothing to do with Helm.** If the chart's

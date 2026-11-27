@@ -69,12 +69,12 @@ kubectl get secrets -n <ns> -l owner=helm,name=<release-name> \
   -o custom-columns='NAME:.metadata.name,STATUS:.metadata.labels.status,VERSION:.metadata.labels.version'
 ```
 
-The fix is to let Flux redo the release. Suspending and resuming forces a fresh
-reconcile:
+The fix is to let Flux redo the release. `--reset` clears the exhausted retry
+count, and `--force` runs a one-off install or upgrade:
 
 ```bash
-flux suspend helmrelease <name> -n <ns>
-flux resume helmrelease <name> -n <ns>
+flux reconcile helmrelease <name> -n <ns> --reset
+flux reconcile helmrelease <name> -n <ns> --force
 ```
 
 If it stays stuck, delete the newest `pending-*` release secret so Helm falls
@@ -109,7 +109,10 @@ Two consequences that surprise people:
   (`-1`) on a chart that will never succeed is a resource-churn loop.
 
 `remediateLastFailure` decides whether the final failure is also rolled back or
-left in place for inspection. Leaving it false makes debugging much easier.
+left in place for inspection. The CRD defaults it to `false` for install, and
+for upgrade to `false` *"unless 'Retries' is greater than 0"*, so with
+`retries: 3` it is effectively on. Set it to `false` explicitly, as a temporary
+change, when you need the failed state left in place to debug.
 
 ## Drift detection
 
@@ -128,7 +131,7 @@ cluster will surface a lot of accumulated manual changes at once.
 
 ```yaml
 spec:
-  values:                        # inline, lowest precedence of the two
+  values:                        # inline, merged last: highest precedence
     replicaCount: 2
   valuesFrom:
     - kind: ConfigMap
@@ -139,13 +142,15 @@ spec:
       targetPath: db.password    # place a single value at a path
 ```
 
-`valuesFrom` entries merge in order, later overriding earlier, and all of them
-override inline `values`. `targetPath` injects one scalar rather than a whole
+`valuesFrom` entries merge in order, later overriding earlier, and inline
+`values` are merged on top of all of them. `targetPath` injects one scalar rather than a whole
 document, which is how you keep a password out of Git without templating the
 whole values file.
 
-Changing a referenced ConfigMap or Secret **does** trigger a HelmRelease upgrade,
-unlike a plain pod mount.
+Changing a referenced ConfigMap or Secret triggers an upgrade on the
+HelmRelease's **next reconcile**, unlike a plain pod mount, which never does. To
+react immediately, label the ConfigMap or Secret
+`reconcile.fluxcd.io/watch: Enabled`.
 
 ## dependsOn
 
