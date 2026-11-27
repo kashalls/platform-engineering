@@ -63,8 +63,8 @@ ss -tanp 'sport = :8080'     # by port
 
 `0.0.0.0:8080` accepts from anywhere; `127.0.0.1:8080` accepts only local
 traffic. A service that works locally and refuses remotely is almost always bound
-to loopback — and in a container that means the pod's loopback, unreachable even
-from a sidecar's perspective for some stacks.
+to loopback. In a Kubernetes pod, every container shares one network namespace,
+so a sidecar can reach the app on `127.0.0.1`, but nothing outside the pod can.
 
 `ss -s` gives the summary. A large `timewait` count is usually normal; a large
 `orphaned` count is not.

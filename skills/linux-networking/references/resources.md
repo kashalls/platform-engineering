@@ -102,8 +102,9 @@ Three ways a disk is "full":
 mounts, and bind mounts.
 
 In `iostat -xz`, `%util` near 100 means the device is saturated (misleading for
-SSDs, which handle parallel requests); `await` rising well above `svctm` means
-requests are queueing.
+SSDs, which handle parallel requests). Rising `r_await`/`w_await` together with
+a growing `aqu-sz` means requests are queueing. Current sysstat no longer
+reports `svctm`, so older advice comparing `await` against it does not apply.
 
 ## File descriptors
 

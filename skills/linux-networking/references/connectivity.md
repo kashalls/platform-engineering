@@ -121,9 +121,9 @@ browser.
 | `tlsv1 alert unknown ca` | Mutual TLS: the server does not trust your client cert's CA. |
 
 ```bash
-# Verify a cert matches a key (the moduli must be identical).
-openssl x509 -noout -modulus -in cert.pem | openssl md5
-openssl rsa  -noout -modulus -in key.pem  | openssl md5
+# Verify a cert matches a key (the hashes must be identical). Works for RSA and EC.
+openssl x509 -noout -pubkey -in cert.pem | openssl sha256
+openssl pkey -pubout -in key.pem         | openssl sha256
 ```
 
 ## Bandwidth and interface errors
