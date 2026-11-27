@@ -25,14 +25,14 @@ Examples here are validated against **renovate-schema v44.39.1**.
 ```json
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":dependencyDashboard"],
+  "extends": ["config:recommended"],
   "timezone": "Etc/UTC",
   "schedule": ["* 0-6 * * 1"],
   "prConcurrentLimit": 5,
   "minimumReleaseAge": "3 days",
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchUpdateTypes": ["patch", "digest"],
       "automerge": true,
       "automergeType": "pr"
     },
@@ -42,7 +42,7 @@ Examples here are validated against **renovate-schema v44.39.1**.
     },
     {
       "matchDatasources": ["docker"],
-      "rangeStrategy": "replace"
+      "pinDigests": true
     }
   ],
   "osvVulnerabilityAlerts": true
@@ -52,14 +52,20 @@ Examples here are validated against **renovate-schema v44.39.1**.
 Each line earns its place:
 
 - **`schedule`** batches PRs into a window instead of trickling them all week.
-  It is cron-like but only the *time* fields are honored — Renovate runs when its
-  scheduler runs, and `schedule` limits when it may **create** branches.
+  It is cron syntax without minute granularity (the minute field must be `*`):
+  `* 0-6 * * 1` means "midnight to 06:59 on Mondays". Renovate runs when its
+  scheduler runs, and `schedule` limits when it may create and update branches.
 - **`prConcurrentLimit`** caps open PRs. Without it, onboarding a large repo opens
   dozens at once.
 - **`minimumReleaseAge`** waits before proposing a release, which dodges the
   version that gets unpublished or hot-fixed hours later.
-- **`dependencyDashboard`** puts everything Renovate *would* do in one issue, so
-  suppressed updates stay visible instead of invisible.
+- **`config:recommended`** already includes the Dependency Dashboard, which puts
+  everything Renovate *would* do in one issue, so suppressed updates stay
+  visible instead of invisible.
+- **Automerge starts at `patch` and `digest`.** Widen it to `minor` once the
+  test suite has earned it (see [Automerge](#automerge)).
+- **`pinDigests`** pins images to a digest, so a rebuilt tag shows up as a
+  reviewable digest update rather than a silent change.
 - **`osvVulnerabilityAlerts`** uses osv.dev so security updates bypass your
   scheduling and grouping.
 
@@ -133,8 +139,12 @@ lists them on the dashboard and only opens a PR after you tick the box.
 ## Pinning vs ranges
 
 ```json
-{ "packageRules": [{ "matchDatasources": ["docker"], "rangeStrategy": "replace" }] }
+{ "packageRules": [{ "matchManagers": ["npm"], "rangeStrategy": "pin" }] }
 ```
+
+`rangeStrategy` applies to managers with version ranges (npm, Composer, Poetry
+and similar). It does nothing for container images, whose tags are not ranges;
+digest pinning for those is `pinDigests: true`.
 
 `rangeStrategy` is one of `auto`, `pin`, `bump`, `replace`, `widen`,
 `update-lockfile`, `in-range-only`.
@@ -143,16 +153,16 @@ lists them on the dashboard and only opens a PR after you tick the box.
   single mechanism by which versions change.
 - **Libraries: keep ranges.** Pinning a library's dependencies forces conflicts
   on your consumers.
-- **Container images: pin by digest.** A tag is mutable; `digest` updates then
-  become real, reviewable changes.
+- **Container images: pin by digest** (`pinDigests: true`). A tag is mutable;
+  `digest` updates then become real, reviewable changes.
 
 ## When Renovate is not doing what you expect
 
 1. **Read the Dependency Dashboard issue.** It lists detected updates, what is
    rate-limited, what is awaiting approval, and what errored. Most questions end
    here.
-2. **Enable debug logging.** For the hosted app, add the repo to
-   `logLevel: debug` via the dashboard; self-hosted, set `LOG_LEVEL=debug`.
+2. **Read the run's logs.** For the hosted Mend app, open the repository's job
+   logs in the Mend developer portal; self-hosted, set `LOG_LEVEL=debug`.
 3. **Check the config is actually valid**:
 
 ```bash
@@ -176,7 +186,8 @@ For versions Renovate cannot find natively:
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.*?_VERSION: \"(?<currentValue>.*)\""
       ],
-      "versioningTemplate": "semver"
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v(?<version>.*)$"
     }
   ]
 }
@@ -185,28 +196,30 @@ For versions Renovate cannot find natively:
 Then annotate the source:
 
 ```yaml
-# renovate: datasource=github-releases depName=kubernetes/kubectl
+# renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION: "1.36.4"
 ```
 
 The named capture groups `datasource`, `depName`, and `currentValue` are
 required; `versioningTemplate` and `registryUrlTemplate` fill gaps the regex
-cannot. Test the regex against the real file before committing — a
+cannot. `extractVersionTemplate` strips the `v` prefix from upstream tags like
+`v1.36.4`, so they compare against the unprefixed `currentValue`. Test the regex against the real file before committing — a
 near-miss silently matches nothing rather than erroring.
 
 ## Gotchas
 
-- **Removed options validate cleanly and do nothing.** `matchPackagePatterns` is
-  no longer in the schema (superseded by `matchPackageNames` with glob support),
-  but `packageRules` entries do not forbid unknown keys — so an outdated rule
-  passes validation and silently never matches. Verified against v44.39.1.
-  When a rule "does nothing", check the option still exists before debugging the
-  pattern.
+- **Old configs may lean on renamed options.** `matchPackagePatterns` is no
+  longer in the v44.39.1 schema (superseded by `matchPackageNames` with glob and
+  regex support). Renovate migrates many renamed options at runtime, so a stale
+  config can still work while looking wrong to readers and editors. When a rule
+  "does nothing", run `renovate-config-validator`, read any migration warnings,
+  and check each option against the current docs before debugging the pattern.
 - **`config:recommended` is the current default preset.** Older material widely
   references `config:base`; if you are copying a config from a blog post, check
   the preset name against the current docs rather than assuming it still resolves.
-- **`schedule` limits branch creation, not merging.** An already-open PR can
-  automerge outside the window.
+- **`schedule` does not govern merging.** Automerge has its own
+  `automergeSchedule` (any time by default), so an already-open PR can
+  automerge outside the `schedule` window.
 - **`extends` presets are merged, and order matters.** A later preset overrides
   an earlier one; your own settings override all of them only if they are outside
   `extends`.
